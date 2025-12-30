@@ -13,7 +13,7 @@ Completed for **Purdue CS252 (Spring 2025)**. Source code is **not publicly avai
 - `free(ptr)` — release previously allocated blocks
 - `calloc(n, size)` — allocate and zero-initialize memory
 - **Extra credit:** `realloc(ptr, new_size)` — resize an allocation while preserving contents when required
-- **Extra credit:** compatibility-focused robustness so that allocation-heavy, real applications (e.g., **Google Chrome** and similar programs) run correctly with this allocator
+- **Extra credit:** compatibility-focused robustness so that allocation-heavy, real applications (e.g., **Google Chrome** and similar programs) run correctly with this allocator using LD_PRELOAD and implementing memalign(), valloc(), posix_memalign(), and pvalloc()
 
 ## My key learnings
 
