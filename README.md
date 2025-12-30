@@ -2,8 +2,7 @@
 
 ## High-level description
 
-This project builds a user-space **dynamic memory allocator**: a replacement for `malloc`, `free`, and `calloc` that manages heap memory by requesting large regions from the OS and then efficiently servicing many smaller allocations and deallocations. The allocator must balance **performance (throughput)** with **memory efficiency (fragmentation/utilization)** while maintaining correctness and robustness under diverse real-world allocation patterns.
-
+This project builds a user-space **dynamic memory allocator** based on Doug Lea's Malloc: a replacement for `malloc`, `free`, and `calloc` that manages heap memory by requesting large regions from the OS and then efficiently servicing many smaller allocations and deallocations.
 ## Course / policy note
 
 Completed for **Purdue CS252 (Spring 2025)**. Source code is **not publicly available** in order to respect course and academic integrity policies.
@@ -18,7 +17,7 @@ Completed for **Purdue CS252 (Spring 2025)**. Source code is **not publicly avai
 
 ## My key learnings
 
-- **Heap management fundamentals:** how an allocator represents blocks, tracks free space, and safely services arbitrary request sizes
+- **Heap management fundamentals:** how an allocator represents blocks(segregated free list version), tracks free space, and safely services arbitrary request sizes
 - **Fragmentation tradeoffs:** understanding internal vs. external fragmentation and why “fast” can still be “wasteful” (and vice versa)
 - **Coalescing and splitting as concepts:** why merging/splitting free space matters for long-running programs with churny allocation patterns
 - **Alignment and metadata overhead:** how constraints like alignment and per-block bookkeeping influence both correctness and utilization
