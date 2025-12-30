@@ -1,4 +1,4 @@
-# Malloc Project Writeup — Dynamic Memory Allocator (CS252 Spring 2025) - NO CODE
+# Malloc Project Writeup — Dynamic Memory Allocator - NO CODE
 
 ## High-level description
 
