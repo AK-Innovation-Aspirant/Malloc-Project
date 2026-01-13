@@ -1,45 +1,49 @@
-# Malloc Project Writeup — Dynamic Memory Allocator - NO CODE
+# Dynamic Memory Allocator (User-Space)
 
-## High-level description
+## Overview
+This project is a user-space dynamic memory allocator: a drop-in implementation of common allocation routines that manages heap memory by requesting large regions from the operating system and then servicing many smaller allocations and deallocations efficiently.
 
-This project builds a user-space **dynamic memory allocator** based on Doug Lea's Malloc: a replacement for `malloc`, `free`, and `calloc` that manages heap memory by requesting large regions from the OS and then efficiently servicing many smaller allocations and deallocations.
-## Course / policy note
+It’s intended as a systems exercise focused on allocator design, fragmentation behavior, alignment, and correctness under stress.
 
-Completed for **Purdue CS252 (Spring 2025)**. Source code is **not publicly available** in order to respect course and academic integrity policies.
+## Supported API Surface
+- **`malloc(size)`** — allocate dynamic memory  
+- **`free(ptr)`** — release previously allocated memory  
+- **`calloc(n, size)`** — allocate and zero-initialize memory  
 
-## Implemented functionality
+### Optional Extensions (when enabled)
+- **`realloc(ptr, new_size)`** — resize an allocation while preserving contents when required  
+- **Alignment-focused routines** such as **`memalign()`**, **`valloc()`**, **`posix_memalign()`**, and **`pvalloc()`** for compatibility with allocation-heavy applications and common runtime expectations.
 
-- `malloc(size)` — allocate dynamic memory
-- `free(ptr)` — release previously allocated blocks
-- `calloc(n, size)` — allocate and zero-initialize memory
-- **Extra credit:** `realloc(ptr, new_size)` — resize an allocation while preserving contents when required
-- **Extra credit:** compatibility-focused robustness so that allocation-heavy, real applications (e.g., **Google Chrome** and similar programs) run correctly with this allocator using LD_PRELOAD and implementing memalign(), valloc(), posix_memalign(), and pvalloc()
+## Design (High Level)
+At a high level, the allocator:
+- Acquires memory from the OS in **large chunks** rather than per-allocation.
+- Tracks allocations using **per-block metadata** (size/status) to support safe reuse.
+- Reuses freed space by maintaining **structures for quickly finding suitable free blocks**.
+- Controls fragmentation via **block splitting** (to avoid waste on smaller requests) and **coalescing** (to merge adjacent free space back into larger blocks).
+- Ensures allocations satisfy **alignment constraints**, balancing correctness with metadata overhead.
 
-## My key learnings
+## Key Learnings
+- **Heap management fundamentals:** representing blocks, tracking free space, and safely servicing arbitrary request sizes.
+- **Fragmentation tradeoffs:** internal vs. external fragmentation, and why “fast” designs can increase memory waste (and vice versa).
+- **Splitting and coalescing:** how they impact long-running workloads with churny allocation patterns.
+- **Alignment and overhead:** how alignment requirements and bookkeeping influence both correctness and utilization.
+- **Correctness under stress:** surviving adversarial patterns, high churn, and edge cases without corrupting memory.
 
-- **Heap management fundamentals:** how an allocator represents blocks(segregated free list version), tracks free space, and safely services arbitrary request sizes
-- **Fragmentation tradeoffs:** understanding internal vs. external fragmentation and why “fast” can still be “wasteful” (and vice versa)
-- **Coalescing and splitting as concepts:** why merging/splitting free space matters for long-running programs with churny allocation patterns
-- **Alignment and metadata overhead:** how constraints like alignment and per-block bookkeeping influence both correctness and utilization
-- **Correctness under stress:** why allocators must survive adversarial patterns, high churn, and edge cases without corrupting memory
+## How Production Allocators Differ (and Why)
+Different allocators (system malloc variants, jemalloc, tcmalloc, etc.) make different engineering choices based on goals and workloads:
+- **Speed vs. memory usage:** throughput-focused fast paths and caching vs. tighter memory utilization.
+- **Data structure strategy:** from simpler lists to more specialized size-class schemes.
+- **Workload assumptions:** interactive apps, servers, and short-lived CLI tools stress allocators differently.
+- **Scalability:** multi-threaded workloads often require designs that reduce contention and improve locality.
 
-## How real allocators differ (and why)
+### Centralized vs. Multi-Arena Designs
+A centralized (single “arena”) approach is excellent for learning core invariants and mechanisms.  
+Many real allocators go further with multiple arenas or per-thread caches to:
+- Reduce contention
+- Improve cache locality
+- Add specialized fast paths for small allocations
 
-Different production allocators (system `malloc`, jemalloc, tcmalloc, etc.) make different choices depending on goals and workload:
+The tradeoff is increased complexity and potential memory overhead from free space distributed across arenas.
 
-- **Speed vs. memory usage:** some prioritize throughput (fast paths, caching), others prioritize lower fragmentation
-- **Data structure strategy:** designs range from simple lists to more specialized structures (e.g., segregated size classes)
-- **Workload assumptions:** interactive apps, servers, and short-lived CLI tools all stress allocators differently
-- **Scalability concerns:** multi-threaded programs often need strategies that reduce contention and improve locality
-
-### Single-arena vs. multi-arena designs
-
-This CS252 allocator is conceptually a **single-arena** design: heap management decisions are centralized, which is great for learning core mechanisms and invariants.
-
-Many real-world allocators go further and use **multiple arenas / per-thread heaps**:
-- **Reduced lock contention:** threads can allocate/free from their “local” arena most of the time instead of fighting over one global structure
-- **Better locality:** allocations made by a thread often stay close together in memory, improving cache behavior
-- **Different fast paths:** small allocations may be served from thread-local caches, while larger allocations follow separate paths
-
-The tradeoff is increased complexity and potential memory overhead (e.g., unused free space distributed across arenas), but it often pays off for highly concurrent applications.
-
+## Notes
+This repository intentionally avoids publishing implementation details that would function as a step-by-step solution. It’s meant to document the concept, scope, and learning outcomes rather than serve as a reference implementation.
